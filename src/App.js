@@ -3,6 +3,7 @@ import './App.css';
 import logo from './logo.svg';
 import MediaControlCard from './components/CardDemo'
 import LoginPage from './components/Login'
+import SignupPage from './components/Signup'
 
 class App extends Component {
 
@@ -16,7 +17,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <LoginPage />
+        <SignupPage />
       </div>
     )
   }
