@@ -4,6 +4,7 @@ import logo from './logo.svg';
 import MediaControlCard from './components/CardDemo'
 import LoginPage from './components/Login'
 import SignupPage from './components/Signup'
+import SongPage from './components/SongPage'
 
 class App extends Component {
 
@@ -17,7 +18,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <SignupPage />
+        <SongPage />
       </div>
     )
   }
