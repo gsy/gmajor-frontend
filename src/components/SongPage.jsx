@@ -25,60 +25,78 @@ export default class SongPage extends Component {
   }
 
   componentDidMount() {
+    /* 需要的参数 */
+    /* var tab_voices = [];
+     * var score_voices = [];
+     * var text_voices = [];
+     * var beams = [];*/
+
     const container =  document.createElement('div');
     const renderer = new Renderer(container, Renderer.Backends.SVG);
     renderer.resize(500, 500);
     const ctx = renderer.getContext();
-    const stave = new TabStave(10, 40, 400);
+    const stave = new Stave(10, 40, 400);
+    const tabStave = new TabStave(10, 120, 400);
     stave.addClef("treble").addTimeSignature("4/4");
+    tabStave.addClef("treble").addTimeSignature("4/4");
     stave.setContext(ctx).draw();
+    tabStave.setContext(ctx).draw();
 
-    var notes = [
-      new StaveNote({clef: "treble", keys: ["c/5"], duration: "q"}),
-      new StaveNote({clef: "treble", keys: ["d/4"], duration: "q"}),
-      new StaveNote({clef: "treble", keys: ["b/4"], duration: "qr"}),
-      new StaveNote({clef: "treble", keys: ["b/4", "e/4", "g/4"], duration: "q"}),
-    ];
+    var tab_voices = [];
+    var score_voices = [];
+    var format_stave = null;
+    var beams = [];
 
-    var notes2 = [
-      new StaveNote({clef: "treble", keys: ["c/4"], duration: "w"})
-    ];
+    var tab_voices = [];/* 输入 */
+    var score_voices = [];
 
-    var notes3 = [
-      new StaveNote({clef: "treble", keys: ["e##/5"], duration: "8d"})
-        .addAccidental(0, new Accidental("##")).addDotToAll(),
-      new StaveNote({clef: "treble", keys: ["eb/5"], duration: "16"})
-        .addAccidental(0, new Accidental("b")),
-      new StaveNote({clef: "treble", keys: ["d/5", "eb/4"], duration: "h"})
-        .addDot(0),
-      new StaveNote({clef: "treble", keys: ["c/5", "eb/5", "g#/5"], duration: "q"})
-        .addAccidental(1, new Accidental("b"))
-        .addAccidental(2, new Accidental("#")).addDotToAll()
-    ];
 
-    var notes4 = [
-      new TabNote({
-        positions: [{str: 3, fret: 7}],
-        duration: "q"
-      }),
+    for(var notes in tab_voices) {
+      if (typeof notes === 'undefined' || notes.length == 0) {
+        continue;
+      }
+      for (var note in notes) {
+        note.setStave(tabStave);
+      }
+      var voice = new Vex.Flow.Voice(Vex.Flow.TIME4_4).setMode(Vex.Flow.Voice.Mode.SOFT);
+      voice.addTickables(notes);
+      tab_voices.push(voice);
+    }
 
-      new TabNote({
-        positions: [{str: 2, fret: 10},
-          {str: 3, fret: 9}],
-        duration: "q"
-      })
-        .addModifier(new Bend("Full"), 1),
+    for(var notes in score_voices) {
+      if (typeof notes === 'undefined' || notes.length == 0) {
+        continue;
+      }
+      for (var note in notes) {
+        note.setStave(stave);
+      }
+      var voice = new Vex.Flow.Voice(Vex.Flow.TIME4_4).setMode(Vex.Flow.Voice.Mode.SOFT);
+      voice.addTickables(notes);
+      score_voices.push(voice);
+    }
 
-      new TabNote({
-        positions: [{str: 2, fret: 5}],
-        duration: "h"
-      }).addModifier(new Vibrato().setHarsh(true).setVibratoWidth(70), 0)
-    ];
+    var format_voices = [];
+    var formatter = new Vex.Flow.Formatter();
 
-    var voices = [
-      new Voice({num_beats: 4, beat_value: 4}).addTickables(notes),
-      new Voice({num_beats: 4, beat_value: 4}).addTickables(notes2),
-    ];
+    if (tab_voices.length > 0) {
+      formatter.joinVoices(tab_voices);
+      format_voices = tab_voices;
+    }
+
+    if (score_voices.length > 0) {
+      formatter.joinVoices(score_voices);
+      format_voices = format_voices.concat(score_voices);
+    }
+
+    if (format_voices.length > 0) {
+      formatter.formatToStave(format_voices, stave);
+    }
+    tab_voices.forEach(function(voice) {voice.draw(ctx, tabStave);});
+    score_voices.forEach(function(voice) {voice.draw(ctx, stave);});
+    var connector = new Vex.Flow.StaveConnector(stave, tabStave);
+    connector.setType(Vex.Flow.StaveConnector.type.BRACKET)
+      .setContext(ctx).draw();
+
 
     var canon_notes = [
       new TabNote({
@@ -101,11 +119,10 @@ export default class SongPage extends Component {
     Formatter.FormatAndDraw(ctx, stave, canon_notes);
 
     var tuning = new Tuning();
-    var spec = tuning.getNosteForFret(1, 1);
+    var spec = tuning.getNoteForFret("1", "1");
     console.log("spec", spec);
     var spec_props = keyProperties(spec);
     console.log("spec_props", spec_props);
-
 
     this.refs.outer.appendChild(container);
   }
