@@ -14,6 +14,7 @@ const {
   Vibrato,
   Tuning,
   keyProperties,
+  KeyManager,
 } = Vex.Flow;
 
 
@@ -24,15 +25,27 @@ export default class SongPage extends Component {
     }
   }
 
-  componentDidMount() {
-    const container =  document.createElement('div');
-    const renderer = new Renderer(container, Renderer.Backends.SVG);
-    renderer.resize(500, 500);
-    const ctx = renderer.getContext();
-    const stave = new TabStave(10, 40, 400);
-    stave.addClef("treble").addTimeSignature("4/4");
-    stave.setContext(ctx).draw();
+  getNoteForFret(fret, string) {
+    /* http://www.vexflow.com/build/docs/tuning.html */
+    /* 除非特殊调弦，否则不用配置就可以拿到 fret + string 对应的 notex */
+    var tuning = new Tuning();
+    var spec = tuning.getNoteForFret("1", "1");
+    console.log("spec", spec);
 
+    var spec_props = keyProperties(spec);
+    console.log("spec_props", spec_props);
+
+    var key_manager = new KeyManager("C");
+    var selected_note = key_manager.selectNote(spec_props.key)
+
+    var new_note = selected_note.note;
+    var new_octave = spec_props.octave;
+    console.log(new_note, new_octave);
+
+    return [new_note, new_octave]
+  }
+
+  setNotes() {
     var notes = [
       new StaveNote({clef: "treble", keys: ["c/5"], duration: "q"}),
       new StaveNote({clef: "treble", keys: ["d/4"], duration: "q"}),
@@ -79,14 +92,22 @@ export default class SongPage extends Component {
       new Voice({num_beats: 4, beat_value: 4}).addTickables(notes),
       new Voice({num_beats: 4, beat_value: 4}).addTickables(notes2),
     ];
+  }
+
+  componentDidMount() {
+    const container =  document.createElement('div');
+    const renderer = new Renderer(container, Renderer.Backends.SVG);
+    renderer.resize(500, 500);
+    const ctx = renderer.getContext();
+    const stave = new TabStave(10, 40, 400);
+    stave.addClef("treble").addTimeSignature("4/4");
+    stave.setContext(ctx).draw();
 
     var canon_notes = [
       new TabNote({
         positions: [{str: 1, fret: 0}, {str: 2, fret: 1}, {str: 3, fret: 0}, {str: 5, fret: 3}],
         duration: "h"
-      }),
-      /* new StaveNote({clef: "treble", keys: ["c/4", "c/5"], duration: "h"}),*/
-      new StaveNote({clef: "treble", keys: ["a#/3", "e/4", "g/4", "a/4"], duration: "h"}),
+      })
     ];
 
     var canon = [
@@ -99,12 +120,6 @@ export default class SongPage extends Component {
     /* voices.forEach(function (v) { v.draw(ctx, stave) });
      * Formatter.FormatAndDraw(ctx, stave, notes3);*/
     Formatter.FormatAndDraw(ctx, stave, canon_notes);
-
-    var tuning = new Tuning();
-    var spec = tuning.getNoteForFret("1", "1");
-    console.log("spec", spec);
-    var spec_props = keyProperties(spec);
-    console.log("spec_props", spec_props);
 
     this.refs.outer.appendChild(container);
   }
